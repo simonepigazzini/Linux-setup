@@ -102,8 +102,7 @@ alias q='exit'
 alias emacs='emacs -nw'
 
 # path alias
-alias goimcp='cd /home/pigo/Documenti/Tesi/iMCP_BTF'
-alias gotesi='cd /home/pigo/Documenti/Tesi'
+
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
