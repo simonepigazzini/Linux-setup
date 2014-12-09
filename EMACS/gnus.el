@@ -19,7 +19,7 @@
 
 (add-hook 'gnus-started-hook 'gnus-group-list-fav-groups)
 
-;; group format and names
+;; ### GROUP FORMAT AND NAMES ###
 (setq gnus-group-line-format "%M%S%p%P%5y:%B%(%uG%)\n")
 (defun gnus-user-format-function-G (arg)
   (let ((mapped-name (assoc gnus-tmp-group group-name-map)))
@@ -38,8 +38,47 @@
                        ("nnimap+UNIMIB:[Gmail]/Bozze" . "UNIMIB: Drafts")
                        ("nnimap+INFN:INBOX" . "INFN: INBOX")
                        ("nnimap+INFN:mail/Sent" . "INFN: Sent")
-                       ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")
-                       ("nnfolder+archive:sent.2014-11" . "ARCHIVE: Sent")))
+                       ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")))
+
+;; highlight current line in group buffer
+(defun gnus-group-hl-line ()
+  (hl-line-mode 1)
+  (set-face-bold-p 'hl-line t)
+  (set-face-background 'hl-line "black")
+  (set-face-foreground 'hl-line "#778")
+  (setq cursor-type nil))
+
+;; setup highlight line in the group buffer
+(add-hook 'gnus-group-mode-hook 'gnus-group-hl-line)
+;; restore the group buffer highlight color after exiting the summary buffer
+(add-hook 'gnus-summary-exit-hook 'gnus-group-hl-line)
+
+;; ### SUMMARY BUFFER ###
+;; tweak summary format 
+(setq gnus-summary-line-format "%U %R [%&user-date;] %B%-20,20n %-80,80s\n"
+      gnus-user-date-format-alist '((t . "%Y-%m-%d %H:%M"))
+      gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references
+      gnus-thread-sort-functions '(gnus-thread-sort-by-date)
+      gnus-sum-thread-tree-false-root "⚫ "
+      gnus-sum-thread-tree-indent " "
+      gnus-sum-thread-tree-leaf-with-other "├► "
+      gnus-sum-thread-tree-root "✪ "
+      gnus-sum-thread-tree-single-leaf "╰► "
+      gnus-sum-thread-tree-vertical "│")
+
+;; highlight current line in summary buffer
+(defun gnus-summary-hl-line ()
+  (hl-line-mode 1)
+  (set-face-bold-p 'hl-line t)
+  (set-face-foreground 'hl-line "#144")
+  (setq cursor-type nil))
+
+(add-hook 'gnus-summary-mode-hook 'gnus-summary-hl-line)
+
+;; set email ordering
+(setq gnus-thread-sort-functions
+      '(gnus-thread-sort-by-most-recent-date
+        gnus-thread-sort-by-most-recent-number))
 
 ;; ### INCOMING MAILS ###
 (require 'nnir)
@@ -72,11 +111,6 @@
                                               (nnimap-logout-timeout 10)
                                               (nnir-search-engine imap))))
 
-;; set email ordering
-(setq gnus-thread-sort-functions
-      '(gnus-thread-sort-by-most-recent-date
-        gnus-thread-sort-by-most-recent-number))
-
 ;; discourage HTML mail:
 (eval-after-load "mm-decode"
   '(progn
@@ -87,10 +121,34 @@
 ;; mark archive copy of sent email as read
 (setq gnus-gcc-mark-as-read t)
 
-;; ispell on the fly
+;; ### SPELL CHECK ###
 (add-hook 'message-mode-hook (lambda () (flyspell-mode 1)))
+;; A *circular* list of ispell languages, plus a special to keep track
+;; of the current language in the list.
+(defvar *ispell-languages* '#1=("american" "italiano" . #1#))
+(defvar *current-language* "american")
 
+;; Utility function to set current language, ensure flyspell-mode
+;; is enabled, and maintain *current-language*.
+(defun set-language (lang)
+  "Set the current ispell language to lang and ensure flyspell-mode enabled."
+  (flyspell-mode 1)
+  (setf *current-language* lang)
+  (ispell-change-dictionary lang))
 
+;; This is the visible function that cycles languages. Note that it
+;; also makes sure flyspell-mode is active (by virtue of the fact
+;; that it calls set-language).
+(defun cycle-language ()
+  "Go to the next language in *ispell-languages*, setting ispell dictionary
+and updating *current-language*."
+  (interactive)
+  (set-language (cadr (member *current-language* *ispell-languages*))))
+
+;; I use this global binding to C-^ to cycle.
+(global-set-key (kbd "C-^") 'cycle-language)
+
+;; ### FROM FIELD ###
 ;; change from field accordingly to current group
 (setq gnus-posting-styles
       '((".*"(address "simone.pigazzini@cern.ch"))
@@ -116,9 +174,25 @@
   (if (search "unimib" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.gmail.com"))
   (message "server changed to: %S" smtpmail-smtp-server))
-
+;; hook the above function to the send-hook
 (add-hook 'message-send-hook 'gnus-smtp-change-server)
- 
+
+;; change archive folder accordingly to from field
+(defun gnus-archive-change-group ()
+  (interactive)
+  (if (search "cern" (mail-fetch-field "From") :from-end)
+      (setq tmp-gcc "\"nnimap+CERN:Sent Items\""))
+  (if (search "infn" (mail-fetch-field "From") :from-end)
+      (setq tmp-gcc "\"nnimap+INFN:mail/Sent\""))
+  (if (search "unimib" (mail-fetch-field "From") :from-end)
+      (setq tmp-gcc "\"nnimap+UNIMIB:[Gmail]/Posta inviata\""))
+  (search-forward "Gcc: ")
+  (kill-line)
+  (insert tmp-gcc)
+  (message "archive changed to: %S" tmp-gcc))
+;; hook the above function to the setup-hook 
+(add-hook 'message-setup-hook 'gnus-archive-change-group)
+
 (require 'smtpmail)
 
 ;; ### NOTIFICATION ###
