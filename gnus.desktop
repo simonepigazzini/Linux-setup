@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Icon[it_IT]=Gnus
+Name[it_IT]=Gnus
+Exec=emacs -nw -f gnus
+Name=gnus
+Icon=/home/pigo/.GNUS/Logos/gnus_logo.jpg
