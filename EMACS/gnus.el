@@ -12,12 +12,10 @@
       nnfolder-directory   "~/.GNUS/Mail/archive"
       nnfolder-active-file "~/.GNUS/Mail/archive/active")
 
+;; ### STARTUP HOOKS ###
 ;; show favourite groups at sturup (group level < 4)
-(defun gnus-group-list-fav-groups ()
-  (interactive)
-  (gnus-group-list-all-groups 3))
-
-(add-hook 'gnus-started-hook 'gnus-group-list-fav-groups)
+(add-hook 'gnus-started-hook (lambda () 
+                               (gnus-group-list-all-groups 3)))
 
 ;; ### GROUP FORMAT AND NAMES ###
 (setq gnus-group-line-format "%M%S%p%P%5y:%B%(%uG%)\n")
@@ -42,14 +40,8 @@
 
 ;; highlight current line in group buffer
 (defun gnus-group-hl-line ()
-  (hl-line-mode 1)
-  (set-face-bold-p 'hl-line t)
-  (set-face-background 'hl-line "black")
-  (set-face-foreground 'hl-line "#778")
-  (setq cursor-type nil))
+  (hl-line-mode 0))
 
-;; setup highlight line in the group buffer
-(add-hook 'gnus-group-mode-hook 'gnus-group-hl-line)
 ;; restore the group buffer highlight color after exiting the summary buffer
 (add-hook 'gnus-summary-exit-hook 'gnus-group-hl-line)
 
@@ -70,6 +62,7 @@
 (defun gnus-summary-hl-line ()
   (hl-line-mode 1)
   (set-face-bold-p 'hl-line t)
+  (set-face-background 'hl-line "black")
   (set-face-foreground 'hl-line "#144")
   (setq cursor-type nil))
 
@@ -92,18 +85,18 @@
 ;; select stuff
 (setq gnus-select-method '(nnnil "")
       gnus-secondary-select-methods '((nnml "")
-				      (nnimap "UNIMIB"
-				              (nnimap-address "imap.gmail.com")
-				              (nnimap-stream ssl)
-				              (nnimap-server-port 993)
-				              (nnimap-logout-timeout 10)
-				              (nnir-search-engine imap))
-				      (nnimap "INFN"
-				              (nnimap-address "virgilio.mib.infn.it")
-				              (nnimap-stream ssl)
-				              (nnimap-server-port 993)
-				              (nnimap-logout-timeout 10)
-				              (nnir-search-engine imap))				      
+                                      (nnimap "UNIMIB"
+                                              (nnimap-address "imap.gmail.com")
+                                              (nnimap-stream ssl)
+                                              (nnimap-server-port 993)
+                                              (nnimap-logout-timeout 10)
+                                              (nnir-search-engine imap))
+                                      (nnimap "INFN"
+                                              (nnimap-address "virgilio.mib.infn.it")
+                                              (nnimap-stream ssl)
+                                              (nnimap-server-port 993)
+                                              (nnimap-logout-timeout 10)
+                                              (nnir-search-engine imap))				      
                                       (nnimap "CERN"
                                               (nnimap-address "imap.cern.ch")
                                               (nnimap-stream ssl)
@@ -196,7 +189,7 @@ and updating *current-language*."
 (require 'smtpmail)
 
 ;; ### NOTIFICATION ###
-;; refresh every 2 min
+;; refresh every 1 min
 (gnus-demon-add-handler 'gnus-demon-scan-news 1 nil)
 
 ;; set for a specific notification level
@@ -210,6 +203,7 @@ and updating *current-language*."
 (setq gnus-unread-count-unimib 0)
 (setq gnus-prev-unread-count-infn 0)
 (setq gnus-unread-count-infn 0)
+(setq gnus-unread-count-all 0)
 
 (defun gnus-group-number-of-unread-mail (level groupname)
   "*Returns the number of unread mails in groups of subscription level LEVEL and below."
@@ -245,17 +239,35 @@ and updating *current-language*."
   (setq gnus-prev-unread-count-infn gnus-unread-count-infn)
   (setq gnus-unread-count-infn (gnus-group-number-of-unread-mail gnus-notify-level "INFN"))
   (if (> gnus-unread-count-infn gnus-prev-unread-count-infn)
-      (gnus-notification-bubble "INFN" (number-to-string gnus-unread-count-infn))))
+      (gnus-notification-bubble "INFN" (number-to-string gnus-unread-count-infn)))
+  ;; set panel indicator status
+  (gnus-indicator-set))
 
 ;; notify with bubble
 (defun gnus-notification-bubble (account newcount)
   "notify new mail with GNOME bubble"
-  (interactive)
   (shell-command (concat "notify-send -t 2000 -i ~/.GNUS/Logos/"
                                account "_logo.jpeg '" account " MAIL' '"
                                newcount " new messages'")))
 
+;; reset panel indicator status
+(defun gnus-indicator-set ()
+  "reset the gnus-indicator if there are no unread messages"
+  (setq gnus-unread-count-all (+ (gnus-group-number-of-unread-mail gnus-notify-level "CERN")
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB")
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")))
+  (cond ((= gnus-unread-count-all 0)
+         (shell-command "gnus-indicator 0"))
+        ((> gnus-unread-count-all 0)
+         (shell-command "gnus-indicator 1"))))
 
+;; ### NOTIFICATION HOOKS ###
 ;; run notification after the servers are fetched
 (add-hook 'gnus-after-getting-new-news-hook 'gnus-unread-update-unread-count t)
-
+;; start/reset gnus-indicator at startup
+(add-hook 'gnus-group-mode-hook 'gnus-indicator-set)
+;; reset gnus-indicator after a group has been visited
+(add-hook 'gnus-summary-exit-hook 'gnus-indicator-set)
+;; kill gnus-indicator while exiting gnus
+(add-hook 'gnus-exit-gnus-hook (lambda () 
+                                 (shell-command "gnus-indicator -1")))
