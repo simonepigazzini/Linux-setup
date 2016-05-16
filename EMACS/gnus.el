@@ -13,9 +13,25 @@
       nnfolder-active-file "~/.GNUS/Mail/archive/active")
 
 ;; ### STARTUP HOOKS ###
+;; set terminal name at startup
+(add-hook 'gnus-start-hook (lambda ()
+                             (shell-command "export PROMPT_COMMAND=\"echo -ne \'\\033]0;GNUS\\007\'\"")))
+
 ;; show favourite groups at sturup (group level < 4)
 (add-hook 'gnus-started-hook (lambda () 
                                (gnus-group-list-all-groups 3)))
+
+;; ### EXIT HOOKS ###
+;; exit emacs when exiting gnus
+(add-hook 'gnus-exit-gnus-hook 'save-buffers-kill-terminal)
+
+;; ### FRAMES LAYOUT ###
+;; summary layout
+(add-hook 'gnus-summary-prepared-hook (lambda()
+                                        (gnus-configure-frame
+                                         '(horizontal 1.0
+                                                      (group 1.0)
+                                                      (summary 0.75 point)))))
 
 ;; ### GROUP FORMAT AND NAMES ###
 (setq gnus-group-line-format "%M%S%p%P%5y:%B%(%uG%)\n")
@@ -63,7 +79,7 @@
   (hl-line-mode 1)
   (set-face-bold-p 'hl-line t)
   (set-face-background 'hl-line "black")
-  (set-face-foreground 'hl-line "#144")
+  (set-face-foreground 'hl-line "green")
   (setq cursor-type nil))
 
 (add-hook 'gnus-summary-mode-hook 'gnus-summary-hl-line)
@@ -118,8 +134,8 @@
 (add-hook 'message-mode-hook (lambda () (flyspell-mode 1)))
 ;; A *circular* list of ispell languages, plus a special to keep track
 ;; of the current language in the list.
-(defvar *ispell-languages* '#1=("american" "italiano" . #1#))
-(defvar *current-language* "american")
+(defvar *ispell-languages* '#1=("english" "italiano" . #1#))
+(defvar *current-language* "english")
 
 ;; Utility function to set current language, ensure flyspell-mode
 ;; is enabled, and maintain *current-language*.
@@ -160,11 +176,11 @@ and updating *current-language*."
 ;; switch smtp server on the fly (very nice&easy)
 (defun gnus-smtp-change-server ()
   (interactive)
-  (if (search "cern" (mail-fetch-field "From") :from-end)
+  (if (cl-search "cern" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.cern.ch"))
-  (if (search "infn" (mail-fetch-field "From") :from-end)
+  (if (cl-search "infn" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "cassio.mib.infn.it"))
-  (if (search "unimib" (mail-fetch-field "From") :from-end)
+  (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.gmail.com"))
   (message "server changed to: %S" smtpmail-smtp-server))
 ;; hook the above function to the send-hook
@@ -173,11 +189,11 @@ and updating *current-language*."
 ;; change archive folder accordingly to from field
 (defun gnus-archive-change-group ()
   (interactive)
-  (if (search "cern" (mail-fetch-field "From") :from-end)
+  (if (cl-search "cern" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+CERN:Sent Items\""))
-  (if (search "infn" (mail-fetch-field "From") :from-end)
+  (if (cl-search "infn" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+INFN:mail/Sent\""))
-  (if (search "unimib" (mail-fetch-field "From") :from-end)
+  (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+UNIMIB:[Gmail]/Posta inviata\""))
   (search-forward "Gcc: ")
   (kill-line)
@@ -215,7 +231,7 @@ and updating *current-language*."
 	(setq info (car newsrc)
 	      clevel (gnus-info-level info))
 	(when (and (<= clevel level)
-                   (search groupname (gnus-info-group info) :from-end)
+                   (cl-search groupname (gnus-info-group info) :from-end)
                    (setq num-of-unread
                          (+ num-of-unread
                             (or (car (gnus-gethash (gnus-info-group info) gnus-newsrc-hashtb))
