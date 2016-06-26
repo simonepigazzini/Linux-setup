@@ -1,5 +1,8 @@
+#!/usr/bin/env xdg-open
+
 [Desktop Entry]
 Type=Application
 Name=central_ws
-Exec=/usr/local/bin/central_sw.sh
+Terminal=true
+Exec=/usr/local/bin/change_ws.sh Center
 X-GNOME-Autostart-enabled=true
