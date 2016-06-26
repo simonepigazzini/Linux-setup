@@ -2,6 +2,18 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+# Startup config
+source /usr/bin/thisroot.sh
+
+# local path
+export PATH=/bin/:/sbin/:/usr/local/bin/:/usr/bin/voms-clients/bin/
+
+# EOS setup
+export EOS_MGM_URL="root://eoscms.cern.ch"
+
+export VISUAL="emacs -nw"
+export EDITOR=emacs
+
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
@@ -22,16 +34,6 @@ shopt -s checkwinsize
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color) color_prompt=yes;;
-esac
 
 #-------------------------------------------------------------------------------
 #COLORED PROMPT :D
@@ -62,23 +64,12 @@ time='\e[1;32m'
 dir='\e[34m'
 reset='\e[00m'
 
-alias easyPS1="${debian_chroot:+($debian_chroot)}\[\e[1;24m\][\[\e[00m\]\u\[\e[1;24m\]@\[\e[00m\]\h\[\e[1;24m\]:\[\e[1;94m\]\w\[\e[00m\]\[\e[1;24m\]]► \[\e[00m\]"
-
-alias fullPS1='export PS1="\[${orange}\]┌─[\[${green}\]\u\[${reset}\]\[${orange}\]@\[${green}\]\h\[${reset}\]\[${orange}\]: \[${blu}\]\$(pwd)\[${reset}\]\[${orange}\]]\[${reset}\]\r\n\[${orange}\]└─[\[${time}\]⌚ \t\[${reset}\]\[${orange}\]|\[${dir}\] \W\[${reset}\]\[${orange}\]]► \[${reset}\]"'
+PS1="\\[${orange}\]┌─[\\[${green}\]\u\\[${reset}\]\\[${orange}\]@\\[${green}\]\h\\[${reset}\]\\[${orange}\]: \\[${blu}\]\$(pwd)\\[${reset}\]\\[${orange}\]]\\[${reset}\]\r\n\\[${orange}\]└─[\\[${time}\]⌚ \t\\[${reset}\]\\[${orange}\]|\\[${dir}\] \W\\[${reset}\]\\[${orange}\]]► \\[${reset}\]"
 
 unset color_prompt force_color_prompt
 
 # set title
-PROMPT_COMMAND="echo -ne '\033]0;JUMBO\007'"
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
-esac
+PROMPT_COMMAND="echo -ne '\033]0;APOLLO\007'"
 
 #------------------------------------------------------------------------------
 
@@ -86,8 +77,8 @@ esac
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
+    alias dir='dir --color=auto'
+    alias vdir='vdir --color=auto'
 
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
@@ -99,10 +90,14 @@ alias ll='ls -ahlF'
 alias la='ls -A'
 alias l='ls -CF'
 alias q='exit'
-alias emacs='emacs -nw'
+alias rmtmp='rm $(find ./ | grep ".*~") &> /dev/null'
+alias emacs="emacs -nw"
+#"fg emacs &> /dev/null || emacs -nw"
+alias gnus='emacs -f gnus'
+alias afsinit='source /usr/local/bin/afs_init.sh'
 
 # path alias
-
+export AFS_HOME=/afs/cern.ch/user/s/spigazzi/
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
@@ -123,6 +118,3 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
-
-# Startup config
-fullPS1
