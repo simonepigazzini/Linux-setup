@@ -1,5 +1,5 @@
 ;; ### STARTUP ###
-;; setup hidden directories
+1;4803;0c;; setup hidden directories
 (setq gnus-home-directory "~/.GNUS"
       message-directory "~/.GNUS/Mail/"
       message-auto-save-directory "~/.GNUS/Mail/drafts"
@@ -20,6 +20,9 @@
 ;; show favourite groups at sturup (group level < 4)
 (add-hook 'gnus-started-hook (lambda () 
                                (gnus-group-list-all-groups 3)))
+;; sort groups alphabetically
+(add-hook 'gnus-started-hook (lambda () 
+                               (gnus-group-sort-groups-by-alphabet)))
 
 ;; ### EXIT HOOKS ###
 ;; exit emacs when exiting gnus
@@ -47,12 +50,16 @@
                        ("nnimap+CERN:Drafts" . "CERN: Drafts")
                        ("nnimap+CERN:done job" . "CERN: done job")
                        ("nnimap+CERN:failed job" . "CERN: failed job")
+                       ("nnimap+CERN:CMS Elog" . "CERN: CMS Elog")
+                       ("nnimap+INFN:INBOX" . "INFN: INBOX")
+                       ("nnimap+INFN:mail/Sent" . "INFN: Sent")
+                       ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")
                        ("nnimap+UNIMIB:INBOX" . "UNIMIB: INBOX")
                        ("nnimap+UNIMIB:[Gmail]/Posta inviata" . "UNIMIB: Sent")
                        ("nnimap+UNIMIB:[Gmail]/Bozze" . "UNIMIB: Drafts")
-                       ("nnimap+INFN:INBOX" . "INFN: INBOX")
-                       ("nnimap+INFN:mail/Sent" . "INFN: Sent")
-                       ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")))
+                       ("nnimap+ARTESIA:INBOX" . "ARTESIA: INBOX")
+                       ("nnimap+ARTESIA:[Gmail]/Sent Mail" . "ARTESIA: Sent")
+                       ("nnimap+ARTESIA:[Gmail]/Drafts" . "ARTESIA: Drafts")))
 
 ;; highlight current line in group buffer
 (defun gnus-group-hl-line ()
@@ -101,6 +108,12 @@
 ;; select stuff
 (setq gnus-select-method '(nnnil "")
       gnus-secondary-select-methods '((nnml "")
+                                      (nnimap "ARTESIA"
+                                              (nnimap-address "imap.gmail.com")
+                                              (nnimap-stream ssl)
+                                              (nnimap-server-port 993)
+                                              (nnimap-logout-timeout 10)
+                                              (nnir-search-engine imap))
                                       (nnimap "UNIMIB"
                                               (nnimap-address "imap.gmail.com")
                                               (nnimap-stream ssl)
@@ -163,7 +176,8 @@ and updating *current-language*."
       '((".*"(address "simone.pigazzini@cern.ch"))
         ("^nnimap\\+CERN.*"(address "simone.pigazzini@cern.ch"))
         ("^nnimap\\+INFN.*"(address "simone.pigazzini@mib.infn.it"))
-        ("^nnimap\\+UNIMIB.*"(address "s.pigazzini@campus.unimib.it"))))
+        ("^nnimap\\+UNIMIB.*"(address "s.pigazzini@campus.unimib.it"))
+        ("^nnimap\\+ARTESIA.*"(address "alloggi.artesia@gmail.com"))))
 
 ;; global stuff
 (setq send-mail-function 'smtpmail-send-it
@@ -182,6 +196,8 @@ and updating *current-language*."
       (setq smtpmail-smtp-server "cassio.mib.infn.it"))
   (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.gmail.com"))
+  (if (cl-search "artesia" (mail-fetch-field "From") :from-end)
+      (setq smtpmail-smtp-server "smtp.gmail.com"))
   (message "server changed to: %S" smtpmail-smtp-server))
 ;; hook the above function to the send-hook
 (add-hook 'message-send-hook 'gnus-smtp-change-server)
@@ -195,6 +211,8 @@ and updating *current-language*."
       (setq tmp-gcc "\"nnimap+INFN:mail/Sent\""))
   (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+UNIMIB:[Gmail]/Posta inviata\""))
+  (if (cl-search "artesia" (mail-fetch-field "From") :from-end)
+      (setq tmp-gcc "\"nnimap+ARTESIA:[Gmail]/Sent Mail\""))
   (search-forward "Gcc: ")
   (kill-line)
   (insert tmp-gcc)
@@ -215,10 +233,12 @@ and updating *current-language*."
 ;; internal variables
 (setq gnus-prev-unread-count-cern 0)
 (setq gnus-unread-count-cern 0)
-(setq gnus-prev-unread-count-unimib 0)
-(setq gnus-unread-count-unimib 0)
 (setq gnus-prev-unread-count-infn 0)
 (setq gnus-unread-count-infn 0)
+(setq gnus-prev-unread-count-unimib 0)
+(setq gnus-unread-count-unimib 0)
+(setq gnus-prev-unread-count-artesia 0)
+(setq gnus-unread-count-artesia 0)
 (setq gnus-unread-count-all 0)
 
 (defun gnus-group-number-of-unread-mail (level groupname)
@@ -246,16 +266,21 @@ and updating *current-language*."
   (setq gnus-unread-count-cern (gnus-group-number-of-unread-mail gnus-notify-level "CERN"))
   (if (> gnus-unread-count-cern gnus-prev-unread-count-cern)
       (gnus-notification-bubble "CERN" (number-to-string gnus-unread-count-cern)))
-  ;; unimib check mail
-  (setq gnus-prev-unread-count-unimib gnus-unread-count-unimib)
-  (setq gnus-unread-count-unimib (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB"))
-  (if (> gnus-unread-count-unimib gnus-prev-unread-count-unimib)
-      (gnus-notification-bubble "UNIMIB" (number-to-string gnus-unread-count-unimib)))
   ;; infn check mail
   (setq gnus-prev-unread-count-infn gnus-unread-count-infn)
   (setq gnus-unread-count-infn (gnus-group-number-of-unread-mail gnus-notify-level "INFN"))
   (if (> gnus-unread-count-infn gnus-prev-unread-count-infn)
       (gnus-notification-bubble "INFN" (number-to-string gnus-unread-count-infn)))
+  ;; unimib check mail
+  (setq gnus-prev-unread-count-unimib gnus-unread-count-unimib)
+  (setq gnus-unread-count-unimib (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB"))
+  (if (> gnus-unread-count-unimib gnus-prev-unread-count-unimib)
+      (gnus-notification-bubble "UNIMIB" (number-to-string gnus-unread-count-unimib)))
+  ;; artesia check mail
+  (setq gnus-prev-unread-count-artesia gnus-unread-count-artesia)
+  (setq gnus-unread-count-artesia (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA"))
+  (if (> gnus-unread-count-artesia gnus-prev-unread-count-artesia)
+      (gnus-notification-bubble "ARTESIA" (number-to-string gnus-unread-count-artesia)))
   ;; set panel indicator status
   (gnus-indicator-set))
 
@@ -270,8 +295,9 @@ and updating *current-language*."
 (defun gnus-indicator-set ()
   "reset the gnus-indicator if there are no unread messages"
   (setq gnus-unread-count-all (+ (gnus-group-number-of-unread-mail gnus-notify-level "CERN")
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")
                                  (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB")
-                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")))
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA")))
   (cond ((= gnus-unread-count-all 0)
          (shell-command "gnus-indicator 0"))
         ((> gnus-unread-count-all 0)
