@@ -1,5 +1,5 @@
 ;; ### STARTUP ###
-1;4803;0c;; setup hidden directories
+;; setup hidden directories
 (setq gnus-home-directory "~/.GNUS"
       message-directory "~/.GNUS/Mail/"
       message-auto-save-directory "~/.GNUS/Mail/drafts"
@@ -51,6 +51,9 @@
                        ("nnimap+CERN:done job" . "CERN: done job")
                        ("nnimap+CERN:failed job" . "CERN: failed job")
                        ("nnimap+CERN:CMS Elog" . "CERN: CMS Elog")
+                       ("nnimap+ETHZ:INBOX" . "ETHZ: INBOX")
+                       ("nnimap+ETHZ:Sent" . "ETHZ: Sent")
+                       ("nnimap+ETHZ:Drafts" . "ETHZ: Drafts")
                        ("nnimap+INFN:INBOX" . "INFN: INBOX")
                        ("nnimap+INFN:mail/Sent" . "INFN: Sent")
                        ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")
@@ -126,6 +129,12 @@
                                               (nnimap-server-port 993)
                                               (nnimap-logout-timeout 10)
                                               (nnir-search-engine imap))				      
+                                      (nnimap "ETHZ"
+                                              (nnimap-address "imap.phys.ethz.ch")
+                                              (nnimap-stream ssl)
+                                              (nnimap-server-port 993)
+                                              (nnimap-logout-timeout 10)
+                                              (nnir-search-engine imap))				      
                                       (nnimap "CERN"
                                               (nnimap-address "imap.cern.ch")
                                               (nnimap-stream ssl)
@@ -175,6 +184,7 @@ and updating *current-language*."
 (setq gnus-posting-styles
       '((".*"(address "simone.pigazzini@cern.ch"))
         ("^nnimap\\+CERN.*"(address "simone.pigazzini@cern.ch"))
+        ("^nnimap\\+ETHZ.*"(address "psimone@phys.ethz.ch"))        
         ("^nnimap\\+INFN.*"(address "simone.pigazzini@mib.infn.it"))
         ("^nnimap\\+UNIMIB.*"(address "s.pigazzini@campus.unimib.it"))
         ("^nnimap\\+ARTESIA.*"(address "alloggi.artesia@gmail.com"))))
@@ -192,6 +202,8 @@ and updating *current-language*."
   (interactive)
   (if (cl-search "cern" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.cern.ch"))
+  (if (cl-search "ethz" (mail-fetch-field "From") :from-end)
+      (setq smtpmail-smtp-server "mail.phys.ethz.ch"))
   (if (cl-search "infn" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "cassio.mib.infn.it"))
   (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
@@ -233,6 +245,8 @@ and updating *current-language*."
 ;; internal variables
 (setq gnus-prev-unread-count-cern 0)
 (setq gnus-unread-count-cern 0)
+(setq gnus-prev-unread-count-ethz 0)
+(setq gnus-unread-count-ethz 0)
 (setq gnus-prev-unread-count-infn 0)
 (setq gnus-unread-count-infn 0)
 (setq gnus-prev-unread-count-unimib 0)
@@ -266,6 +280,11 @@ and updating *current-language*."
   (setq gnus-unread-count-cern (gnus-group-number-of-unread-mail gnus-notify-level "CERN"))
   (if (> gnus-unread-count-cern gnus-prev-unread-count-cern)
       (gnus-notification-bubble "CERN" (number-to-string gnus-unread-count-cern)))
+  ;; ethz check mail
+  (setq gnus-prev-unread-count-ethz gnus-unread-count-ethz)
+  (setq gnus-unread-count-ethz (gnus-group-number-of-unread-mail gnus-notify-level "ETHZ"))
+  (if (> gnus-unread-count-ethz gnus-prev-unread-count-ethz)
+      (gnus-notification-bubble "ETHZ" (number-to-string gnus-unread-count-ethz)))
   ;; infn check mail
   (setq gnus-prev-unread-count-infn gnus-unread-count-infn)
   (setq gnus-unread-count-infn (gnus-group-number-of-unread-mail gnus-notify-level "INFN"))
@@ -295,7 +314,8 @@ and updating *current-language*."
 (defun gnus-indicator-set ()
   "reset the gnus-indicator if there are no unread messages"
   (setq gnus-unread-count-all (+ (gnus-group-number-of-unread-mail gnus-notify-level "CERN")
-                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "ETHZ")
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")                                 
                                  (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB")
                                  (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA")))
   (cond ((= gnus-unread-count-all 0)
