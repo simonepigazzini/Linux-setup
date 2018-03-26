@@ -1,0 +1,17 @@
+Host *
+     ServerAliveInterval 120
+Host lxplus*cern.ch
+     User spigazzi
+     HostName lxplus.cern.ch
+     GSSAPIAuthentication      yes
+     GSSAPIDelegateCredentials yes
+     ForwardAgent              yes
+     GSSAPITrustDNS            yes     
+
+Host psi*
+     PreferredAuthentications=publickey,password
+
+Host psi
+     User spigazzi
+     LocalForward 9900 localhost:9900
+     HostName t3ui02.psi.ch
