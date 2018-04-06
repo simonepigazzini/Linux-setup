@@ -9,13 +9,15 @@ source /usr/bin/thisroot.sh
 export PATH=/bin/:/sbin/:/usr/local/bin/:/usr/bin/voms-clients/bin/
 
 # EOS setup
-export EOS_MGM_URL="root://eoscms.cern.ch"
-
-export VISUAL="emacs -nw"
-export EDITOR=emacs
+export EOS_MGM_URL="root://eosuser"
 
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
+
+# proper <Tab> completion for shell variables
+if ((BASH_VERSINFO[0] >= 4)) && ((BASH_VERSINFO[1] >= 2)); then
+   shopt -s direxpand
+fi
 
 # don't put duplicate lines in the history. See bash(1) for more options
 # ... or force ignoredups and ignorespace
@@ -64,7 +66,7 @@ time='\e[1;32m'
 dir='\e[34m'
 reset='\e[00m'
 
-PS1="\\[${orange}\]┌─[\\[${green}\]\u\\[${reset}\]\\[${orange}\]@\\[${green}\]\h\\[${reset}\]\\[${orange}\]: \\[${blu}\]\$(pwd)\\[${reset}\]\\[${orange}\]]\\[${reset}\]\r\n\\[${orange}\]└─[\\[${time}\]⌚ \t\\[${reset}\]\\[${orange}\]|\\[${dir}\] \W\\[${reset}\]\\[${orange}\]]► \\[${reset}\]"
+#PS1="\\[${orange}\]┌─[\\[${green}\]\u\\[${reset}\]\\[${orange}\]@\\[${green}\]\h\\[${reset}\]\\[${orange}\]: \\[${blu}\]\$(pwd)\\[${reset}\]\\[${orange}\]]\\[${reset}\]\r\n\\[${orange}\]└─[\\[${time}\]⌚ \t\\[${reset}\]\\[${orange}\]|\\[${dir}\] \W\\[${reset}\]\\[${orange}\]]► \\[${reset}\]"
 
 unset color_prompt force_color_prompt
 
@@ -103,6 +105,11 @@ export AFS_HOME=/afs/cern.ch/user/s/spigazzi/
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
+# Enviroment tuning
+export VISUAL="emacs -nw"
+export EDITOR=emacs
+export LS_COLORS=$LS_COLORS'*.cfg=00;36:'
+
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
@@ -118,3 +125,8 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
+
+if [ -f /usr/lib/python3.6/site-packages/powerline/bindings/bash/powerline.sh ]; then
+    source /usr/lib/python3.6/site-packages/powerline/bindings/bash/powerline.sh
+fi
+

@@ -107,6 +107,26 @@
     (insert (number-to-string (+ next-slide-number 1)))
     (bu-fix-next-slides-number)))
 
+;; ### OVERPRINT ###
+(defun bu-insert-overprint (n-slides)
+  "Insert n item in overprint environment (using \onslide)"
+  (interactive "nNumber of slides: ")
+  (setq indent-begin (point))
+  (insert "\\begin{overprint}\n")
+  (dotimes (i-slides n-slides)
+    (bu-insert-onslide (number-to-string (+ i-slides 1)))
+    (insert "\n"))
+  (insert "\\end{overprint}")
+  (indent-region indent-begin (point))
+  (goto-cha\end{overprint}r indent-begin)
+  (next-line 2)
+  (indent-for-tab-command))
+
+(defun bu-insert-onslide (i-slide)
+  "Insert a single onslide, with slide number <i-slides> (default 1)"
+  (interactive "sOnslide number: ")
+  (insert (concat "\\onslide<" i-slide ">\n")))
+
 ;; ### COLUMNS ###
 (defun bu-insert-columns (n-columns)
   "Insert <n-columns> columns with width 1/<n-columns>"
@@ -239,10 +259,74 @@
          (indent-for-tab-command)
          (setq n-rec 0))))
 
-;; ### KEY BINDINGS ###
+;; ### Text style manipulation
+(defun bu-highlight-text (begin end)
+  "Highlight selected region. If no region is selected inizialize an empty highlight region"
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list nil nil)))
+  (cond ((and begin end)
+         (goto-char begin)
+         (insert "\\hl{")
+         (goto-char (+ end 4))
+         (insert "}"))
+        ((and (not begin) (not end))
+         (insert "\\hl{}")
+         (goto-char (- (point) 1)))))
+
+(defun bu-scale-text-size (begin end &optional size)
+  "Set font size for selected region. If no region is selected inizialize an empty region"
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list nil nil)))
+  (setq size (completing-read "Font size: "
+                              '("tiny", "footnotesize" "small" "large" "Large" "Huge")
+                              nil nil nil nil "small"))
+  (cond ((and begin end)
+         (goto-char end)
+         (insert "}")
+         (goto-char begin)
+         (insert "{\\" size " "))
+        ((and (not begin) (not end))
+         (insert "{\\" size " }")
+         (goto-char (- (point) 1)))))
+
+(defun bu-set-text-color (begin end &optional color)
+  "Set text color for selected region. If no region is selected inizialize an empty region"
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end))
+                 (list nil nil)))
+  (setq color (completing-read "Text color: "
+                               '("highlight" "mainfg" "blue" "green" "red")
+                               nil nil nil nil "highlight"))
+  (cond ((and begin end)
+         (goto-char end)
+         (insert "}")
+         (goto-char begin)
+         (insert "{\\color{" color "} "))
+        ((and (not begin) (not end))
+         (insert "{\\color{" color "} }")
+         (goto-char (- (point) 1)))))
+
+(defun bu-insert-rarrow (color)
+  "Insert a bare MVRightArrow"
+  (interactive (list
+                (completing-read "Arrow color: "
+                                 '("mainfg", "blue" "red" "green" "orange" "yellow"
+                                   "DarkBlue" "DarkGreen" "DarkOrange")
+                                 nil nil nil nil "")))
+  (if (not (string= color ""))
+      (insert "{\\color{" color "}\\MVRightarrow} ")
+    (insert "\\MVRightarrow ")))
+
+;; ### KEY BINDINGS} ###
 (defun bu-set-kbds ()
   (local-set-key (kbd "C-c s") 'bu-insert-slide)
   (local-set-key (kbd "C-c i") 'bu-insert-itemize)
+  (local-set-key (kbd "C-c h") 'bu-highlight-text)
+  (local-set-key (kbd "C-c a") 'bu-insert-rarrow)
+  (local-set-key (kbd "C-c t") 'bu-scale-text-size)  
+  (local-set-key (kbd "C-c c") 'bu-set-text-color)  
   (local-set-key (kbd "C-i x") (lambda () (interactive) (bu-new-item 0)))
   (local-set-key (kbd "C-i v") (lambda () (interactive) (bu-new-item 1)))
   (local-set-key (kbd "C-i i") (lambda () (interactive) (bu-new-item 2)))

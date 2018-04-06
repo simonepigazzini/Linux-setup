@@ -54,9 +54,6 @@
                        ("nnimap+ETHZ:INBOX" . "ETHZ: INBOX")
                        ("nnimap+ETHZ:Sent" . "ETHZ: Sent")
                        ("nnimap+ETHZ:Drafts" . "ETHZ: Drafts")
-                       ("nnimap+INFN:INBOX" . "INFN: INBOX")
-                       ("nnimap+INFN:mail/Sent" . "INFN: Sent")
-                       ("nnimap+INFN:mail/Drafts" . "INFN: Drafts")
                        ("nnimap+UNIMIB:INBOX" . "UNIMIB: INBOX")
                        ("nnimap+UNIMIB:[Gmail]/Posta inviata" . "UNIMIB: Sent")
                        ("nnimap+UNIMIB:[Gmail]/Bozze" . "UNIMIB: Drafts")
@@ -123,12 +120,6 @@
                                               (nnimap-server-port 993)
                                               (nnimap-logout-timeout 10)
                                               (nnir-search-engine imap))
-                                      (nnimap "INFN"
-                                              (nnimap-address "virgilio.mib.infn.it")
-                                              (nnimap-stream ssl)
-                                              (nnimap-server-port 993)
-                                              (nnimap-logout-timeout 10)
-                                              (nnir-search-engine imap))				      
                                       (nnimap "ETHZ"
                                               (nnimap-address "imap.phys.ethz.ch")
                                               (nnimap-stream ssl)

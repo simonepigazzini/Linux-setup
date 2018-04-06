@@ -15,3 +15,7 @@ Host psi
      User spigazzi
      LocalForward 9900 localhost:9900
      HostName t3ui02.psi.ch
+
+Host cms-h4* pcethtb*
+     User cmsdaq
+     IdentityFile ~/.ssh/id_rsa_h4daq
