@@ -1,0 +1,10 @@
+#!/bin/bash
+
+BASENAME=`echo ${1} | sed 's/.tex$//g'`
+CLEANDIR=`echo '.'$BASENAME'_extra'`
+
+mkdir -p $CLEANDIR
+
+pdflatex -shell-escape -output-directory=$CLEANDIR ${1}
+
+mv $CLEANDIR/$BASENAME.pdf .

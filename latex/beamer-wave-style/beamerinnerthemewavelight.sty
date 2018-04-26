@@ -1,0 +1,68 @@
+\mode<presentation>
+
+\setbeamercolor{normal text}{fg=white}
+\usebeamercolor[fg]{normal text}
+
+\setbeamertemplate{background}{
+  \begin{tikzpicture}
+    \useasboundingbox (0,0) rectangle(\the\paperwidth, \the\paperheight);
+    \fill[color=white] (0, 0) rectangle (\the\paperwidth, \the\paperheight);
+  \end{tikzpicture}
+}
+
+% footnotes
+\usepackage[ddmmyy]{datetime}
+\setbeamertemplate{footline}
+{
+  \begin{tikzpicture}
+    \useasboundingbox (0,0) rectangle(\the\paperwidth, 0.1*\the\paperheight);
+    \draw[color=DodgerBlue4, ultra thick] plot [smooth] coordinates {
+      (0.03*\the\paperwidth, 0.055*\the\paperheight)
+      (0.25*\the\paperwidth, 0.055*\the\paperheight)
+      (0.3*\the\paperwidth, 0.027*\the\paperheight)
+      (0.95*\the\paperwidth, 0.027*\the\paperheight)
+    };
+    \ifnum\thepage>1\relax%
+    \node[white, align=right] at (0.1*\the\paperwidth, 0.027*\the\paperheight) {\usebeamerfont{author in head/foot}\insertshortauthor~| \usebeamerfont{date in head/foot}\insertshortdate{}};
+    \fi
+    \fill[color=white] (0.955*\the\paperwidth, 0.06*\the\paperheight) circle (0.06*\the\paperheight);
+    \fill[color=DodgerBlue4] (0.955*\the\paperwidth, 0.06*\the\paperheight) circle (0.05*\the\paperheight);
+    \node[white, align=center] at (0.955*\the\paperwidth, 0.057*\the\paperheight)
+    {\footnotesize{\bf\insertframenumber{}} / \inserttotalframenumber};
+  \end{tikzpicture}
+  %   \begin{beamercolorbox}[wd=.333333\paperwidth,dp=1ex,center]{author in head/foot}
+  %   \end{beamercolorbox}
+  % \hbox{
+  %   \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}
+  %     \usebeamerfont{author in head/foot}\insertshortauthor~~\insertshortinstitute
+  %   \end{beamercolorbox}
+  %   \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}
+  %     \usebeamerfont{title in head/foot}\insertshorttitle
+  %   \end{beamercolorbox}
+  %   \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}
+  %     \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+  %     {\bf\insertframenumber{}} / \inserttotalframenumber\hspace*{5ex}
+  % \end{beamercolorbox}}
+  % \vskip0pt
+}
+
+% Title page
+\defbeamertemplate*{title page}{wavelight}[1][]
+{
+  \vskip6cm%
+  \begin{beamercolorbox}[wd=12cm,leftskip=3cm,sep=8pt,#1]{title page header}
+    \usebeamerfont{title}\inserttitle\par%
+  \end{beamercolorbox}%
+  \vskip0.75cm%
+  \begin{beamercolorbox}[wd=12cm,leftskip=3cm,#1]{author}
+    \usebeamerfont{author}\insertauthor%
+  \end{beamercolorbox}
+  \vskip0.2cm%
+  \begin{beamercolorbox}[wd=12cm,leftskip=3cm,#1]{date}
+    \usebeamerfont{author}\insertdate%
+  \end{beamercolorbox}
+  \vfill
+}
+
+\mode
+<all>
