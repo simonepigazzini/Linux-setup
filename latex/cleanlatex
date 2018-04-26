@@ -5,6 +5,6 @@ set CLEANDIR (echo '.'$BASENAME'_extra')
 
 mkdir -p $CLEANDIR
 
-echo "pdflatex -shell-escape -output-directory=$CLEANDIR $argv[1]"
+pdflatex -shell-escape -output-directory=$CLEANDIR $argv[1]
 
 mv $CLEANDIR/$BASENAME.pdf .
