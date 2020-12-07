@@ -1,21 +1,71 @@
 Host *
      ServerAliveInterval 120
-Host lxplus*cern.ch
-     User spigazzi
-     HostName lxplus.cern.ch
+Host lxplus*.cern.ch
+     User                      spigazzi
+     HostName                  lxplus.cern.ch
+     ForwardAgent              yes
+     ForwardX11                yes
+     ForwardX11Trusted         yes
      GSSAPIAuthentication      yes
      GSSAPIDelegateCredentials yes
-     ForwardAgent              yes
      GSSAPITrustDNS            yes     
 
-Host psi*
+Host psi
+     PreferredAuthentications=publickey,password
+     User         spigazzi
+     LocalForward 9800 localhost:9800
+     LocalForward 9900 localhost:9900      
+     #LocalForward 8010 localhost:8010
+     HostName     t3ui02.psi.ch
+
+Host cscs*
      PreferredAuthentications=publickey,password
 
-Host psi
+Host cscs
+     LocalForward 9800 localhost:9800
+     #LocalForward 6600 localhost:6600
      User spigazzi
-     LocalForward 9900 localhost:9900
-     HostName t3ui02.psi.ch
+     HostName ela.cscs.ch
 
 Host cms-h4* pcethtb*
-     User cmsdaq
-     IdentityFile ~/.ssh/id_rsa_h4daq
+     User              cmsdaq
+     IdentityFile      ~/.ssh/id_rsa_h4daq
+     ForwardAgent      yes
+     ForwardX11        yes
+     ForwardX11Trusted yes
+
+Host h4tunnel
+     User              cmsdaq
+     IdentityFile      ~/.ssh/id_rsa_h4daq
+     HostName          cms-h4-06
+     ProxyCommand      ssh lxplus.cern.ch nc %h %p
+     # Forward you SSH key agent so that it can be used on further hops
+     ForwardAgent      yes
+     # For X11
+     ForwardX11        yes
+     ForwardX11Trusted yes
+     DynamicForward    9800
+
+Host 892tunnel
+     User              cmsdaq
+     IdentityFile      ~/.ssh/id_rsa_h4daq
+     HostName          cms-h4-12
+     ProxyCommand      ssh lxplus.cern.ch nc %h %p
+     # Forward you SSH key agent so that it can be used on further hops
+     ForwardAgent      yes
+     # For X11
+     ForwardX11        yes
+     ForwardX11Trusted yes
+     DynamicForward    9800
+
+Host mtddqm
+     User              cmsdaq
+     IdentityFile      ~/.ssh/id_rsa_h4daq
+     HostName          pc-mtd-tb02
+     ProxyCommand      ssh lxplus.cern.ch nc %h %p
+     # Forward you SSH key agent so that it can be used on further hops
+     ForwardAgent      yes
+     # For X11
+     ForwardX11        yes
+     ForwardX11Trusted yes
+     DynamicForward    9800                       

@@ -50,6 +50,7 @@
                        ("nnimap+CERN:Drafts" . "CERN: Drafts")
                        ("nnimap+CERN:done job" . "CERN: done job")
                        ("nnimap+CERN:failed job" . "CERN: failed job")
+                       ("nnimap+CERN:phedex" . "CERN: phedex")
                        ("nnimap+CERN:CMS Elog" . "CERN: CMS Elog")
                        ("nnimap+ETHZ:INBOX" . "ETHZ: INBOX")
                        ("nnimap+ETHZ:Sent" . "ETHZ: Sent")
@@ -96,14 +97,21 @@
       '(gnus-thread-sort-by-most-recent-date
         gnus-thread-sort-by-most-recent-number))
 
-;; ### INCOMING MAILS ###
+;; display old emails by default
+(setq gnus-fetch-old-headers t)
+
+;; ### SEARCH EMAILS
 (require 'nnir)
 
+;; ### INCOMING MAILS ###
 ;; personal stuff
 (setq user-full-name "Simone Pigazzini"
       mail-host-address "cern.ch"
       user-mail-address "simone.pigazzini@cern.ch"
       message-from-style 'angles)
+
+;; dovecot for offline imap
+(setq imap-shell-program "imapd -c ~/.dovecotrc")
 
 ;; select stuff
 (setq gnus-select-method '(nnnil "")
@@ -131,7 +139,10 @@
                                               (nnimap-stream ssl)
                                               (nnimap-server-port 993)
                                               (nnimap-logout-timeout 10)
-                                              (nnir-search-engine imap))))
+                                              (nnir-search-engine imap))
+                                      (nnimap "CERN-local"
+                                              (nnimap-stream shell))))
+
 
 ;; discourage HTML mail:
 (eval-after-load "mm-decode"
@@ -176,7 +187,6 @@ and updating *current-language*."
       '((".*"(address "simone.pigazzini@cern.ch"))
         ("^nnimap\\+CERN.*"(address "simone.pigazzini@cern.ch"))
         ("^nnimap\\+ETHZ.*"(address "psimone@phys.ethz.ch"))        
-        ("^nnimap\\+INFN.*"(address "simone.pigazzini@mib.infn.it"))
         ("^nnimap\\+UNIMIB.*"(address "s.pigazzini@campus.unimib.it"))
         ("^nnimap\\+ARTESIA.*"(address "alloggi.artesia@gmail.com"))))
 
@@ -195,8 +205,6 @@ and updating *current-language*."
       (setq smtpmail-smtp-server "smtp.cern.ch"))
   (if (cl-search "ethz" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "mail.phys.ethz.ch"))
-  (if (cl-search "infn" (mail-fetch-field "From") :from-end)
-      (setq smtpmail-smtp-server "cassio.mib.infn.it"))
   (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq smtpmail-smtp-server "smtp.gmail.com"))
   (if (cl-search "artesia" (mail-fetch-field "From") :from-end)
@@ -210,8 +218,6 @@ and updating *current-language*."
   (interactive)
   (if (cl-search "cern" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+CERN:Sent Items\""))
-  (if (cl-search "infn" (mail-fetch-field "From") :from-end)
-      (setq tmp-gcc "\"nnimap+INFN:mail/Sent\""))
   (if (cl-search "unimib" (mail-fetch-field "From") :from-end)
       (setq tmp-gcc "\"nnimap+UNIMIB:[Gmail]/Posta inviata\""))
   (if (cl-search "artesia" (mail-fetch-field "From") :from-end)
@@ -238,8 +244,6 @@ and updating *current-language*."
 (setq gnus-unread-count-cern 0)
 (setq gnus-prev-unread-count-ethz 0)
 (setq gnus-unread-count-ethz 0)
-(setq gnus-prev-unread-count-infn 0)
-(setq gnus-unread-count-infn 0)
 (setq gnus-prev-unread-count-unimib 0)
 (setq gnus-unread-count-unimib 0)
 (setq gnus-prev-unread-count-artesia 0)
@@ -247,7 +251,7 @@ and updating *current-language*."
 (setq gnus-unread-count-all 0)
 
 (defun gnus-group-number-of-unread-mail (level groupname)
-  "*Returns the number of unread mails in groups of subscription level LEVEL and below."
+  "*Returns the number of unread mails in groups of subscription level LEVEL and below."  
   (with-current-buffer "*Group*"
     (let ((num-of-unread 0)
 	  (newsrc (cdr gnus-newsrc-alist))
@@ -259,7 +263,7 @@ and updating *current-language*."
                    (cl-search groupname (gnus-info-group info) :from-end)
                    (setq num-of-unread
                          (+ num-of-unread
-                            (or (car (gnus-gethash (gnus-info-group info) gnus-newsrc-hashtb))
+                            (or (car (gethash (gnus-info-group info) gnus-newsrc-hashtb))
                                 0)))))
         (setq newsrc (cdr newsrc)))
       num-of-unread)))
@@ -276,11 +280,6 @@ and updating *current-language*."
   (setq gnus-unread-count-ethz (gnus-group-number-of-unread-mail gnus-notify-level "ETHZ"))
   (if (> gnus-unread-count-ethz gnus-prev-unread-count-ethz)
       (gnus-notification-bubble "ETHZ" (number-to-string gnus-unread-count-ethz)))
-  ;; infn check mail
-  (setq gnus-prev-unread-count-infn gnus-unread-count-infn)
-  (setq gnus-unread-count-infn (gnus-group-number-of-unread-mail gnus-notify-level "INFN"))
-  (if (> gnus-unread-count-infn gnus-prev-unread-count-infn)
-      (gnus-notification-bubble "INFN" (number-to-string gnus-unread-count-infn)))
   ;; unimib check mail
   (setq gnus-prev-unread-count-unimib gnus-unread-count-unimib)
   (setq gnus-unread-count-unimib (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB"))
@@ -291,8 +290,9 @@ and updating *current-language*."
   (setq gnus-unread-count-artesia (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA"))
   (if (> gnus-unread-count-artesia gnus-prev-unread-count-artesia)
       (gnus-notification-bubble "ARTESIA" (number-to-string gnus-unread-count-artesia)))
-  ;; set panel indicator status
-  (gnus-indicator-set))
+  )
+  ;; ;; set panel indicator status
+  ;; (gnus-indicator-set))
 
 ;; notify with bubble
 (defun gnus-notification-bubble (account newcount)
@@ -306,21 +306,20 @@ and updating *current-language*."
   "reset the gnus-indicator if there are no unread messages"
   (setq gnus-unread-count-all (+ (gnus-group-number-of-unread-mail gnus-notify-level "CERN")
                                  (gnus-group-number-of-unread-mail gnus-notify-level "ETHZ")
-                                 (gnus-group-number-of-unread-mail gnus-notify-level "INFN")                                 
                                  (gnus-group-number-of-unread-mail gnus-notify-level "UNIMIB")
-                                 (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA")))
-  (cond ((= gnus-unread-count-all 0)
-         (shell-command "gnus-indicator 0"))
-        ((> gnus-unread-count-all 0)
-         (shell-command "gnus-indicator 1"))))
+                                 (gnus-group-number-of-unread-mail gnus-notify-level "ARTESIA"))))
+  ;; (cond ((= gnus-unread-count-all 0)
+  ;;        (shell-command "gnus-indicator 0"))
+  ;;       ((> gnus-unread-count-all 0)
+  ;;        (shell-command "gnus-indicator 1"))))
 
 ;; ### NOTIFICATION HOOKS ###
 ;; run notification after the servers are fetched
 (add-hook 'gnus-after-getting-new-news-hook 'gnus-unread-update-unread-count t)
 ;; start/reset gnus-indicator at startup
-(add-hook 'gnus-group-mode-hook 'gnus-indicator-set)
+;; (add-hook 'gnus-group-mode-hook 'gnus-indicator-set)
 ;; reset gnus-indicator after a group has been visited
-(add-hook 'gnus-summary-exit-hook 'gnus-indicator-set)
+;; (add-hook 'gnus-summary-exit-hook 'gnus-indicator-set)
 ;; kill gnus-indicator while exiting gnus
-(add-hook 'gnus-exit-gnus-hook (lambda () 
-                                 (shell-command "gnus-indicator -1")))
+;; (add-hook 'gnus-exit-gnus-hook (lambda () 
+;;                                  (shell-command "gnus-indicator -1")))
