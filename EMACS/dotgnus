@@ -16,17 +16,29 @@
 ;; set terminal name at startup
 (add-hook 'gnus-start-hook (lambda ()
                              (shell-command "export PROMPT_COMMAND=\"echo -ne \'\\033]0;GNUS\\007\'\"")))
-
 ;; show favourite groups at sturup (group level < 4)
 (add-hook 'gnus-started-hook (lambda () 
                                (gnus-group-list-all-groups 3)))
 ;; sort groups alphabetically
 (add-hook 'gnus-started-hook (lambda () 
                                (gnus-group-sort-groups-by-alphabet)))
+;; start offlineimap
+(add-hook 'gnus-started-hook (lambda () 
+                               (offlineimap)))
 
 ;; ### EXIT HOOKS ###
 ;; exit emacs when exiting gnus
+(add-hook 'gnus-exit-gnus-hook 'offlineimap-quit)
+
+;; exit emacs when exiting gnus
 (add-hook 'gnus-exit-gnus-hook 'save-buffers-kill-terminal)
+
+;; ### Other hooks ###
+;; dired hooks
+(add-hook 'dired-mode-hook 'turn-on-gnus-dired-mode)
+
+;; ### language tools activated while composing email ###
+(add-hook 'message-mode-hook 'languagetool-server-mode)
 
 ;; ### FRAMES LAYOUT ###
 ;; summary layout
@@ -45,7 +57,9 @@
       (cdr mapped-name))))
 
 ;; coversion map
-(setq group-name-map '(("nnimap+CERN:INBOX" . "CERN: INBOX")
+(setq group-name-map '(("nnimap+CERN-local:INBOX" . "CERN-local: INBOX")
+                       ("nnimap+CERN-local:Sent Items" . "CERN-local: Sent")
+                       ("nnimap+CERN:INBOX" . "CERN: INBOX")
                        ("nnimap+CERN:Sent Items" . "CERN: Sent")
                        ("nnimap+CERN:Drafts" . "CERN: Drafts")
                        ("nnimap+CERN:done job" . "CERN: done job")
@@ -116,18 +130,12 @@
 ;; select stuff
 (setq gnus-select-method '(nnnil "")
       gnus-secondary-select-methods '((nnml "")
-                                      (nnimap "ARTESIA"
-                                              (nnimap-address "imap.gmail.com")
-                                              (nnimap-stream ssl)
-                                              (nnimap-server-port 993)
-                                              (nnimap-logout-timeout 10)
-                                              (nnir-search-engine imap))
-                                      (nnimap "UNIMIB"
-                                              (nnimap-address "imap.gmail.com")
-                                              (nnimap-stream ssl)
-                                              (nnimap-server-port 993)
-                                              (nnimap-logout-timeout 10)
-                                              (nnir-search-engine imap))
+                                      ;; (nnimap "UNIMIB"
+                                      ;;         (nnimap-address "imap.gmail.com")
+                                      ;;         (nnimap-stream ssl)
+                                      ;;         (nnimap-server-port 993)
+                                      ;;         (nnimap-logout-timeout 10)
+                                      ;;         (nnir-search-engine imap))
                                       (nnimap "ETHZ"
                                               (nnimap-address "imap.phys.ethz.ch")
                                               (nnimap-stream ssl)
@@ -141,8 +149,10 @@
                                               (nnimap-logout-timeout 10)
                                               (nnir-search-engine imap))
                                       (nnimap "CERN-local"
-                                              (nnimap-stream shell))))
-
+                                              (nnimap-stream network)
+                                              (nnimap-address "localhost")
+                                              (nnimap-authenticator login)
+                                              (nnimap-user "cern"))))
 
 ;; discourage HTML mail:
 (eval-after-load "mm-decode"
@@ -153,33 +163,6 @@
 ;; ### OUTGOING MAILs ###
 ;; mark archive copy of sent email as read
 (setq gnus-gcc-mark-as-read t)
-
-;; ### SPELL CHECK ###
-(add-hook 'message-mode-hook (lambda () (flyspell-mode 1)))
-;; A *circular* list of ispell languages, plus a special to keep track
-;; of the current language in the list.
-(defvar *ispell-languages* '#1=("english" "italiano" . #1#))
-(defvar *current-language* "english")
-
-;; Utility function to set current language, ensure flyspell-mode
-;; is enabled, and maintain *current-language*.
-(defun set-language (lang)
-  "Set the current ispell language to lang and ensure flyspell-mode enabled."
-  (flyspell-mode 1)
-  (setf *current-language* lang)
-  (ispell-change-dictionary lang))
-
-;; This is the visible function that cycles languages. Note that it
-;; also makes sure flyspell-mode is active (by virtue of the fact
-;; that it calls set-language).
-(defun cycle-language ()
-  "Go to the next language in *ispell-languages*, setting ispell dictionary
-and updating *current-language*."
-  (interactive)
-  (set-language (cadr (member *current-language* *ispell-languages*))))
-
-;; I use this global binding to C-^ to cycle.
-(global-set-key (kbd "C-^") 'cycle-language)
 
 ;; ### FROM FIELD ###
 ;; change from field accordingly to current group
